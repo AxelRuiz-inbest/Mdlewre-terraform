@@ -81,7 +81,7 @@ resource "azurerm_mssql_server" "sql-server-cluster" {
   public_network_access_enabled = true
   version                      = "12.0"
   administrator_login          = "Administrador"
-  administrator_login_password = "f23s0Tm@z#F6"
+  administrator_login_password = "Coloquepassword@z#F6"
 }
 
 resource "azurerm_mssql_database" "sqlserver-db" {
