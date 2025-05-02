@@ -1,5 +1,5 @@
 resource "azurerm_cosmosdb_account" "cosmosdb" {
-  name                = "cosmosdb-nadro-lot-prod-001" # debe ser único a nivel global
+  name                = var.name_cosmo # debe ser único a nivel global
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
   offer_type          = "Standard"
@@ -63,7 +63,7 @@ resource "azurerm_cosmosdb_sql_container" "container" {
 resource "azurerm_mssql_virtual_network_rule" "sql_subnet_access" {
   name                = "sql-subnet-access"
   server_id           = azurerm_mssql_server.sql-server-cluster.id
-  subnet_id           = data.azurerm_subnet.subnetdb.id
+  subnet_id           = azurerm_subnet.subnet_sql.id
   ignore_missing_vnet_service_endpoint = false
 }
 
@@ -75,7 +75,7 @@ resource "azurerm_mssql_firewall_rule" "local_ip" {
 }
 
 resource "azurerm_mssql_server" "sql-server-cluster" {
-  name                         = "sqlserver-nadro-lot-prod-001"
+  name                         = var.name_sql_server
   resource_group_name          = data.azurerm_resource_group.rg.name
   location                     = data.azurerm_resource_group.rg.location
   public_network_access_enabled = true
@@ -85,7 +85,7 @@ resource "azurerm_mssql_server" "sql-server-cluster" {
 }
 
 resource "azurerm_mssql_database" "sqlserver-db" {
-  name         = "lot-db"
+  name         = var.name_sql_db
   server_id    = azurerm_mssql_server.sql-server-cluster.id
   collation    = "SQL_Latin1_General_CP1_CI_AS"
   license_type = "LicenseIncluded"
