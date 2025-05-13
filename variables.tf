@@ -186,3 +186,11 @@ variable "Owner_app" {
   description = "default"
   type        = string
 }
+
+variable "windows_function_apps" {
+  type    = list(object({
+    name         = string
+    function_id  = string
+  }))
+  description = "Lista de Function Apps Windows a integrar a la VNet"
+}

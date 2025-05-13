@@ -1,0 +1,236 @@
+/*DNZ Zone*/
+resource "azurerm_private_dns_zone" "websites" {
+  name                = "privatelink.azurewebsites.net"
+  resource_group_name = data.azurerm_resource_group.rg.name
+}
+resource "azurerm_private_dns_zone" "webpubsub_dns" {
+  name                = "privatelink.webpubsub.azure.com"
+  resource_group_name = data.azurerm_resource_group.rg.name
+}
+resource "azurerm_private_dns_zone" "sb_dns" {
+  name                = "privatelink.servicebus.windows.net"
+  resource_group_name = data.azurerm_resource_group.rg.name
+}
+resource "azurerm_private_dns_zone" "cosmosdb" {
+  name                = "privatelink.documents.azure.com"
+  resource_group_name = data.azurerm_resource_group.rg.name
+}
+resource "azurerm_private_dns_zone" "sql_dns" {
+  name                = "privatelink.database.windows.net"
+  resource_group_name = data.azurerm_resource_group.rg.name
+}
+/*DNZ Zone links*/
+resource "azurerm_private_dns_zone_virtual_network_link" "dns_link" {
+  name                  = "dnslink"
+  resource_group_name   = data.azurerm_resource_group.rg.name
+  private_dns_zone_name = azurerm_private_dns_zone.websites.name
+  virtual_network_id    = azurerm_virtual_network.vnet-functions.id
+}
+resource "azurerm_private_dns_zone_virtual_network_link" "webpubsub_dns_link" {
+  name                  = "webpubsub-dns-link"
+  resource_group_name   = data.azurerm_resource_group.rg.name
+  private_dns_zone_name = azurerm_private_dns_zone.webpubsub_dns.name
+  virtual_network_id    = azurerm_virtual_network.vnet-functions.id
+}
+resource "azurerm_private_dns_zone_virtual_network_link" "sb_dns_link" {
+  name                  = "sb-dns-${var.name_service_bus}"
+  resource_group_name   = data.azurerm_resource_group.rg.name
+  private_dns_zone_name = azurerm_private_dns_zone.sb_dns.name
+  virtual_network_id    = azurerm_virtual_network.vnet-functions.id
+}
+resource "azurerm_private_dns_zone_virtual_network_link" "cosmosdb_dns_link" {
+  name                  = "cosmosdb-dns-link"
+  resource_group_name   = data.azurerm_resource_group.rg.name
+  private_dns_zone_name = azurerm_private_dns_zone.cosmosdb.name
+  virtual_network_id    = azurerm_virtual_network.vnet-functions.id
+}
+resource "azurerm_private_dns_zone_virtual_network_link" "sql_dns_link" {
+  name                  = "sql-dns-link"
+  resource_group_name   = data.azurerm_resource_group.rg.name
+  private_dns_zone_name = azurerm_private_dns_zone.sql_dns.name
+  virtual_network_id    = azurerm_virtual_network.vnet-functions.id
+}
+/*Vnet intregada AppFunctions*/
+resource "azurerm_app_service_virtual_network_swift_connection" "vnet_integration" {
+  for_each     = { for func in var.windows_function_apps : func.name => func }
+  app_service_id = each.value.function_id
+  subnet_id      = azurerm_subnet.subnet_fun.id
+}
+
+/*appFun01*/
+resource "azurerm_private_endpoint" "function1" {
+  name                = "privte-${var.name_app_funt_1}"
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
+  subnet_id           = azurerm_subnet.subnet_en.id
+
+  private_service_connection {
+    name                           = "${var.name_app_funt_1}-connection"
+    private_connection_resource_id = azurerm_windows_function_app.net_function_1.id
+    subresource_names              = ["sites"]
+    is_manual_connection           = false
+  }
+}
+
+/*appFun02*/
+resource "azurerm_private_endpoint" "function2" {
+  name                = "privte-${var.name_app_funt_2}"
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
+  subnet_id           = azurerm_subnet.subnet_en.id
+
+  private_service_connection {
+    name                           = "${var.name_app_funt_2}-connection"
+    private_connection_resource_id = azurerm_windows_function_app.net_function_2.id
+    subresource_names              = ["sites"]
+    is_manual_connection           = false
+  }
+}
+
+/*appFun03*/
+resource "azurerm_private_endpoint" "function3" {
+  name                = "privte-${var.name_app_funt_3}"
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
+  subnet_id           = azurerm_subnet.subnet_en.id
+
+  private_service_connection {
+    name                           = "${var.name_app_funt_3}-connection"
+    private_connection_resource_id = azurerm_windows_function_app.net_function_3.id
+    subresource_names              = ["sites"]
+    is_manual_connection           = false
+  }
+}
+
+/*DNS Funtions, service bus */
+resource "azurerm_private_dns_a_record" "function1" {
+  name                = "dns-${var.name_app_funt_1}"
+  zone_name           = azurerm_private_dns_zone.websites.name
+  resource_group_name = data.azurerm_resource_group.rg.name
+  ttl                 = 300
+  records             = [azurerm_private_endpoint.functionA_pe.private_service_connection[0].private_ip_address]
+}
+resource "azurerm_private_dns_a_record" "function2" {
+  name                = "dns-${var.name_app_funt_2}"
+  zone_name           = azurerm_private_dns_zone.websites.name
+  resource_group_name = data.azurerm_resource_group.rg.name
+  ttl                 = 300
+  records             = [azurerm_private_endpoint.functionB_pe.private_service_connection[0].private_ip_address]
+}
+resource "azurerm_private_dns_a_record" "function3" {
+  name                = "dns-${var.name_app_funt_3}"
+  zone_name           = azurerm_private_dns_zone.websites.name
+  resource_group_name = data.azurerm_resource_group.rg.name
+  ttl                 = 300
+  records             = [azurerm_private_endpoint.functionB_pe.private_service_connection[0].private_ip_address]
+}
+resource "azurerm_private_dns_a_record" "sb_record" {
+  name                = azurerm_servicebus_namespace.servicebus.name
+  zone_name           = azurerm_private_dns_zone.sb_dns.name
+  resource_group_name = data.azurerm_resource_group.rg.name
+  ttl                 = 300
+  records             = [azurerm_private_endpoint.servicebus_pe.private_service_connection[0].private_ip_address]
+}
+resource "azurerm_private_dns_a_record" "webpubsub_dns_record" {
+  name                = azurerm_web_pubsub.webpubsub-hub.name
+  zone_name           = azurerm_private_dns_zone.webpubsub_dns.name
+  resource_group_name = data.azurerm_resource_group.rg.name
+  ttl                 = 300
+  records             = [azurerm_private_endpoint.webpubsub_pe.private_service_connection[0].private_ip_address]
+}
+resource "azurerm_private_dns_a_record" "cosmosdb_dns_record" {
+  name                = "dns-${var.name_cosmo}"
+  zone_name           = azurerm_private_dns_zone.cosmosdb.name
+  resource_group_name = data.azurerm_resource_group.rg.name
+  ttl                 = 300
+  records             = [azurerm_private_endpoint.cosmosdb_pe.private_service_connection[0].private_ip_address]
+}
+resource "azurerm_private_dns_a_record" "sql_dns_record" {
+  name                = "dns-${var.name_sql_server}"
+  zone_name           = azurerm_private_dns_zone.sql_dns.name
+  resource_group_name = data.azurerm_resource_group.rg.name
+  ttl                 = 300
+  records             = [azurerm_private_endpoint.sql_pe.private_service_connection[0].private_ip_address]
+}
+resource "azurerm_private_dns_a_record" "appservice_dns" {
+  name                = "dns-${var.name_app_service_1}"
+  zone_name           = azurerm_private_dns_zone.websites.name
+  resource_group_name = data.azurerm_resource_group.rg.name
+  ttl                 = 300
+  records             = [azurerm_private_endpoint.appservice_pe.private_service_connection[0].private_ip_address]
+}
+
+/*ServiceBus*/
+resource "azurerm_private_endpoint" "servicebus_pe" {
+  name                = "${var.name_service_bus}-private-endpoint"
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
+  subnet_id           = azurerm_subnet.subnet_en.id
+
+  private_service_connection {
+    name                           = "sb-connection"
+    private_connection_resource_id = azurerm_servicebus_namespace.servicebus.id
+    subresource_names              = ["namespace"]
+    is_manual_connection           = false
+  }
+}
+
+/*AzureWEBPubsub*/
+resource "azurerm_private_endpoint" "webpubsub_pe" {
+  name                = "webpubsub-private-endpoint"
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
+  subnet_id           = azurerm_subnet.subnet_en.id
+
+  private_service_connection {
+    name                           = "webpubsub-connection"
+    private_connection_resource_id = azurerm_web_pubsub.webpubsub-hub.id
+    subresource_names              = ["webpubsub"]
+    is_manual_connection           = false
+  }
+}
+
+/*Cosmo*/
+resource "azurerm_private_endpoint" "cosmosdb_pe" {
+  name                = "cosmosdb-private-endpoint"
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
+  subnet_id           = azurerm_subnet.subnet_en.id
+
+  private_service_connection {
+    name                           = "cosmosdb-connection"
+    private_connection_resource_id = azurerm_cosmosdb_account.cosmosdb.id
+    subresource_names              = ["Sql"]
+    is_manual_connection           = false
+  }
+}
+
+/*SQL*/
+resource "azurerm_private_endpoint" "sql_pe" {
+  name                = "sql-private-endpoint"
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
+  subnet_id           = azurerm_subnet.subnet_en.id
+
+  private_service_connection {
+    name                           = "sql-connection"
+    private_connection_resource_id = azurerm_mssql_server.sql.id
+    subresource_names              = ["sqlServer"]
+    is_manual_connection           = false
+  }
+}
+
+/*Appservice*/
+resource "azurerm_private_endpoint" "appservice_pe" {
+  name                = "appservice-private-endpoint"
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
+  subnet_id           = azurerm_subnet.subnet_en.id
+
+  private_service_connection {
+    name                           = "${var.name_app_service_1}-connection"
+    private_connection_resource_id = azurerm_linux_web_app.appnodered.id
+    subresource_names              = ["sites"]
+    is_manual_connection           = false
+  }
+}
