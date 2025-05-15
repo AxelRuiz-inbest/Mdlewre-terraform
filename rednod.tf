@@ -16,7 +16,35 @@ resource "azurerm_linux_web_app" "appnodered" {
   site_config {
       application_stack {
       node_version = "22-lts"
-    }
+      }
+      ip_restriction_default_action = "Deny"
+      ip_restriction {
+        name       = "eduardo-office"
+        ip_address  = "149.19.169.152/32"
+        action     = "Allow"
+        priority   = 100
+        }
+      ip_restriction {
+        name       = "axel-office"
+        ip_address  = "177.248.19.209/32"
+        action     = "Allow"
+        priority   = 110
+      }
+      ip_restriction {
+          name       = "VPN-Nadro"
+          ip_address  = "201.144.207.82/32"
+          action     = "Allow"
+          priority   = 120
+        }
+      ip_restriction {
+        virtual_network_subnet_id = "/subscriptions/${var.subscription_id}/resourceGroups/${var.resource_group_name}/providers/Microsoft.Network/virtualNetworks/${var.name_vnet_1}/subnets/${var.name_subnet_funt}"  
+      }
+      ip_restriction {
+        virtual_network_subnet_id = "/subscriptions/${var.subscription_id}/resourceGroups/${var.resource_group_name}/providers/Microsoft.Network/virtualNetworks/${var.name_vnet_1}/subnets/${var.name_subnet_en}"  
+      }
+      ip_restriction {
+        virtual_network_subnet_id = "/subscriptions/${var.subscription_id}/resourceGroups/${var.resource_group_name}/providers/Microsoft.Network/virtualNetworks/${var.name_vnet_1}/subnets/${var.name_subnet_sql}"  
+      }
   }
 
   tags = {
@@ -29,5 +57,3 @@ resource "azurerm_linux_web_app" "appnodered" {
     Owner_app = var.Owner_app
   }
 }
-
-

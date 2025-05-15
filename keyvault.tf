@@ -1,3 +1,6 @@
+data "azurerm_client_config" "current" {}
+
+
 resource "azurerm_key_vault" "keyvault" {
   name                        = var.key_vult
   location                    = data.azurerm_resource_group.rg.location
@@ -6,7 +9,7 @@ resource "azurerm_key_vault" "keyvault" {
   sku_name                    = "standard"
   soft_delete_retention_days  = 7
   purge_protection_enabled    = true
-  public_network_access_enabled = false
+  public_network_access_enabled = true
   enable_rbac_authorization   = false
 
   access_policy {
@@ -14,17 +17,42 @@ resource "azurerm_key_vault" "keyvault" {
     object_id = data.azurerm_client_config.current.object_id
 
     key_permissions = [
-      "get",
-      "list",
-      "create",
-      "delete"
+      "Get",
+      "List",
+      "Create",
+      "Delete"
     ]
 
     secret_permissions = [
-      "get",
-      "list",
-      "set",
-      "delete"
+      "Get",
+      "List",
+      "Set",
+      "Delete"
     ]
+
   }
+
+  network_acls {
+    default_action = "Allow"
+    bypass         = "AzureServices"
+    ip_rules       = ["177.248.19.209/32"]
+  }
+}
+
+resource "azurerm_key_vault_secret" "servicebus" {
+  name         = "ServiceBusConnectionString"
+  value        = var.ServiceBusConnectionString
+  key_vault_id = azurerm_key_vault.keyvault.id
+}
+
+resource "azurerm_key_vault_secret" "webpubsub" {
+  name         = "WebPubSubConnectionString"
+  value        = var.WebPubSubConnectionString
+  key_vault_id = azurerm_key_vault.keyvault.id
+}
+
+resource "azurerm_key_vault_secret" "cosmosdb" {
+  name         = "CosmosDBConnectionString"
+  value        = var.CosmosDBConnectionString
+  key_vault_id = azurerm_key_vault.keyvault.id
 }

@@ -187,10 +187,54 @@ variable "Owner_app" {
   type        = string
 }
 
-variable "windows_function_apps" {
-  type    = list(object({
-    name         = string
-    function_id  = string
-  }))
-  description = "Lista de Function Apps Windows a integrar a la VNet"
+variable "endpfun1" {
+  description = "default"
+  type        = string
+}
+variable "endpfun2" {
+  description = "default"
+  type        = string
+}
+variable "endpfun3" {
+  description = "default"
+  type        = string
+}
+variable "endpfun4" {
+  description = "default"
+  type        = string
+}
+
+variable "endpappservice" {
+  description = "default"
+  type        = string
+}
+
+variable "endpsql" {
+  description = "default"
+  type        = string
+}
+variable "endpcosmo" {
+  description = "default"
+  type        = string
+}
+variable "endppubsub" {
+  description = "default"
+  type        = string
+}
+variable "endpservicebus" {
+  description = "default"
+  type        = string
+}
+
+variable "ServiceBusConnectionString" {
+  description = "default"
+  type        = string
+}
+variable "WebPubSubConnectionString" {
+  description = "default"
+  type        = string
+}
+variable "CosmosDBConnectionString" {
+  description = "default"
+  type        = string
 }

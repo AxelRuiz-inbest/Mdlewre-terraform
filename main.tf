@@ -37,6 +37,35 @@ resource "azurerm_windows_function_app" "net_function_2" {
     application_stack {
       dotnet_version = "v8.0"
     }
+    use_32_bit_worker = false
+    ip_restriction_default_action = "Deny"
+      ip_restriction {
+        name       = "eduardo-office"
+        ip_address  = "149.19.169.152/32"
+        action     = "Allow"
+        priority   = 100
+        }
+      ip_restriction {
+        name       = "axel-office"
+        ip_address  = "177.248.19.209/32"
+        action     = "Allow"
+        priority   = 110
+      }
+      ip_restriction {
+          name       = "VPN-Nadro"
+          ip_address  = "201.144.207.82/32"
+          action     = "Allow"
+          priority   = 120
+        }
+      ip_restriction {
+        virtual_network_subnet_id = "/subscriptions/${var.subscription_id}/resourceGroups/${var.resource_group_name}/providers/Microsoft.Network/virtualNetworks/${var.name_vnet_1}/subnets/${var.name_subnet_funt}"  
+      }
+      ip_restriction {
+        virtual_network_subnet_id = "/subscriptions/${var.subscription_id}/resourceGroups/${var.resource_group_name}/providers/Microsoft.Network/virtualNetworks/${var.name_vnet_1}/subnets/${var.name_subnet_en}"  
+      }
+      ip_restriction {
+        virtual_network_subnet_id = "/subscriptions/${var.subscription_id}/resourceGroups/${var.resource_group_name}/providers/Microsoft.Network/virtualNetworks/${var.name_vnet_1}/subnets/${var.name_subnet_sql}"  
+      }
   }
 
   identity {
@@ -48,12 +77,14 @@ resource "azurerm_windows_function_app" "net_function_2" {
   app_settings = {
     "AzureWebJobsStorage"          = azurerm_storage_account.function_storage_hub.primary_connection_string
     "FUNCTIONS_WORKER_RUNTIME"     = "dotnet-isolated"
-    "WEB_PUBSUB_CONNECTION_STRING" = azurerm_web_pubsub.webpubsub-hub.primary_connection_string
-    "SERVICEBUS_CONNECTION"        = azurerm_servicebus_namespace.servicebus.default_primary_connection_string
     "DESTINATION_APP_URL"          = "https://appservicioexterno.com/api/endpoint"
     APPINSIGHTS_INSTRUMENTATIONKEY      = azurerm_application_insights.insights_functions_2.instrumentation_key
     APPLICATIONINSIGHTS_CONNECTION_STRING = azurerm_application_insights.insights_functions_2.connection_string
     "APPLICATIONINSIGHTS_CONNECTION_STRING" = azurerm_application_insights.insights_functions_2.connection_string
+    "SERVICEBUS_CONNECTION"       = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.servicebus.id})"
+    "SERVICEBUS_TOPIC_NAME"            = "nadro-iot-plc-topic"
+    "KEY_VAULT_URL"	                   = "https://keyvault-lot-prod-01.vault.azure.net/"
+    SEND_ADDITIONAL_PARAM_TO_SAP	     = true
   }
 
   depends_on = [
@@ -102,6 +133,35 @@ resource "azurerm_windows_function_app" "net_function_3" {
     application_stack {
       dotnet_version = "v8.0"
     }
+    use_32_bit_worker = false
+    ip_restriction_default_action = "Deny"
+      ip_restriction {
+        name       = "eduardo-office"
+        ip_address  = "149.19.169.152/32"
+        action     = "Allow"
+        priority   = 100
+        }
+      ip_restriction {
+        name       = "axel-office"
+        ip_address  = "177.248.19.209/32"
+        action     = "Allow"
+        priority   = 110
+      }
+      ip_restriction {
+          name       = "VPN-Nadro"
+          ip_address  = "201.144.207.82/32"
+          action     = "Allow"
+          priority   = 120
+        }
+      ip_restriction {
+        virtual_network_subnet_id = "/subscriptions/${var.subscription_id}/resourceGroups/${var.resource_group_name}/providers/Microsoft.Network/virtualNetworks/${var.name_vnet_1}/subnets/${var.name_subnet_funt}"  
+      }
+      ip_restriction {
+        virtual_network_subnet_id = "/subscriptions/${var.subscription_id}/resourceGroups/${var.resource_group_name}/providers/Microsoft.Network/virtualNetworks/${var.name_vnet_1}/subnets/${var.name_subnet_en}"  
+      }
+      ip_restriction {
+        virtual_network_subnet_id = "/subscriptions/${var.subscription_id}/resourceGroups/${var.resource_group_name}/providers/Microsoft.Network/virtualNetworks/${var.name_vnet_1}/subnets/${var.name_subnet_sql}"  
+      }
   }
 
   identity {
@@ -113,12 +173,13 @@ resource "azurerm_windows_function_app" "net_function_3" {
   app_settings = {
     "AzureWebJobsStorage"          = azurerm_storage_account.function_storage_hub.primary_connection_string
     "FUNCTIONS_WORKER_RUNTIME"     = "dotnet-isolated"
-    "WEB_PUBSUB_CONNECTION_STRING" = azurerm_web_pubsub.webpubsub-hub.primary_connection_string
-    "SERVICEBUS_CONNECTION"        = azurerm_servicebus_namespace.servicebus.default_primary_connection_string
     "DESTINATION_APP_URL"          = "https://appservicioexterno.com/api/endpoint"
     APPINSIGHTS_INSTRUMENTATIONKEY      = azurerm_application_insights.insights_functions_3.instrumentation_key
     APPLICATIONINSIGHTS_CONNECTION_STRING = azurerm_application_insights.insights_functions_3.connection_string
     "APPLICATIONINSIGHTS_CONNECTION_STRING" = azurerm_application_insights.insights_functions_3.connection_string
+    "SERVICEBUS_CONNECTION"       = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.servicebus.id})"
+    "SERVICEBUS_TOPIC_NAME"            = "nadro-iot-plc-topic"
+    "KEY_VAULT_URL"	                   = "https://keyvault-lot-prod-01.vault.azure.net/"
   }
 
   depends_on = [
@@ -167,6 +228,35 @@ resource "azurerm_windows_function_app" "net_function_4" {
     application_stack {
       dotnet_version = "v8.0"
     }
+    use_32_bit_worker = false
+    ip_restriction_default_action = "Deny"
+      ip_restriction {
+        name       = "eduardo-office"
+        ip_address  = "149.19.169.152/32"
+        action     = "Allow"
+        priority   = 100
+        }
+      ip_restriction {
+        name       = "axel-office"
+        ip_address  = "177.248.19.209/32"
+        action     = "Allow"
+        priority   = 110
+      }
+      ip_restriction {
+          name       = "VPN-Nadro"
+          ip_address  = "201.144.207.82/32"
+          action     = "Allow"
+          priority   = 120
+        }
+      ip_restriction {
+        virtual_network_subnet_id = "/subscriptions/${var.subscription_id}/resourceGroups/${var.resource_group_name}/providers/Microsoft.Network/virtualNetworks/${var.name_vnet_1}/subnets/${var.name_subnet_funt}"  
+      }
+      ip_restriction {
+        virtual_network_subnet_id = "/subscriptions/${var.subscription_id}/resourceGroups/${var.resource_group_name}/providers/Microsoft.Network/virtualNetworks/${var.name_vnet_1}/subnets/${var.name_subnet_en}"  
+      }
+      ip_restriction {
+        virtual_network_subnet_id = "/subscriptions/${var.subscription_id}/resourceGroups/${var.resource_group_name}/providers/Microsoft.Network/virtualNetworks/${var.name_vnet_1}/subnets/${var.name_subnet_sql}"  
+      }
   }
 
   identity {
@@ -178,12 +268,14 @@ resource "azurerm_windows_function_app" "net_function_4" {
   app_settings = {
     "AzureWebJobsStorage"          = azurerm_storage_account.function_storage_hub.primary_connection_string
     "FUNCTIONS_WORKER_RUNTIME"     = "dotnet-isolated"
-    "WEB_PUBSUB_CONNECTION_STRING" = azurerm_web_pubsub.webpubsub-hub.primary_connection_string
-    "SERVICEBUS_CONNECTION"        = azurerm_servicebus_namespace.servicebus.default_primary_connection_string
     "DESTINATION_APP_URL"          = "https://appservicioexterno.com/api/endpoint"
     APPINSIGHTS_INSTRUMENTATIONKEY      = azurerm_application_insights.insights_functions_4.instrumentation_key
     APPLICATIONINSIGHTS_CONNECTION_STRING = azurerm_application_insights.insights_functions_4.connection_string
     "APPLICATIONINSIGHTS_CONNECTION_STRING" = azurerm_application_insights.insights_functions_4.connection_string
+    "SERVICEBUS_CONNECTION"       = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.servicebus.id})"
+    "DATABASE_NAME"               = "nosqldb-nadro-lot-prod-00"
+    "KEY_VAULT_URL"	              = "https://keyvault-lot-prod-01.vault.azure.net/"
+    "CONTAINER_NAME"	            = "maincontainer"
   }
 
   depends_on = [

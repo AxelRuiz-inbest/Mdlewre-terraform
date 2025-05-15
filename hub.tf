@@ -62,6 +62,35 @@ resource "azurerm_windows_function_app" "net_function_1" {
     application_stack {
       dotnet_version = "v8.0"
     }
+    use_32_bit_worker = false
+    ip_restriction_default_action = "Deny"
+      ip_restriction {
+        name       = "eduardo-office"
+        ip_address  = "149.19.169.152/32"
+        action     = "Allow"
+        priority   = 100
+        }
+      ip_restriction {
+        name       = "axel-office"
+        ip_address  = "177.248.19.209/32"
+        action     = "Allow"
+        priority   = 110
+      }
+      ip_restriction {
+          name       = "VPN-Nadro"
+          ip_address  = "201.144.207.82/32"
+          action     = "Allow"
+          priority   = 120
+        }
+      ip_restriction {
+        virtual_network_subnet_id = "/subscriptions/${var.subscription_id}/resourceGroups/${var.resource_group_name}/providers/Microsoft.Network/virtualNetworks/${var.name_vnet_1}/subnets/${var.name_subnet_funt}"  
+      }
+      ip_restriction {
+        virtual_network_subnet_id = "/subscriptions/${var.subscription_id}/resourceGroups/${var.resource_group_name}/providers/Microsoft.Network/virtualNetworks/${var.name_vnet_1}/subnets/${var.name_subnet_en}"  
+      }
+      ip_restriction {
+        virtual_network_subnet_id = "/subscriptions/${var.subscription_id}/resourceGroups/${var.resource_group_name}/providers/Microsoft.Network/virtualNetworks/${var.name_vnet_1}/subnets/${var.name_subnet_sql}"  
+      }
   }
 
   identity {
@@ -73,10 +102,11 @@ resource "azurerm_windows_function_app" "net_function_1" {
   app_settings = {
     "AzureWebJobsStorage"          = azurerm_storage_account.function_storage_hub.primary_connection_string
     "FUNCTIONS_WORKER_RUNTIME"     = "dotnet-isolated"
-    "WEB_PUBSUB_CONNECTION_STRING" = azurerm_web_pubsub.webpubsub-hub.primary_connection_string
-    "SERVICEBUS_CONNECTION"        = azurerm_servicebus_namespace.servicebus.default_primary_connection_string
     "DESTINATION_APP_URL"          = "https://appservicioexterno.com/api/endpoint"
     "APPLICATIONINSIGHTS_CONNECTION_STRING" = azurerm_application_insights.insights_functions_1.connection_string
+    "SERVICEBUS_CONNECTION"       = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.servicebus.id})"
+    "SERVICEBUS_TOPIC_NAME"            = "nadro-iot-plc-topic"
+    "KEY_VAULT_URL"	                   = "https://keyvault-lot-prod-01.vault.azure.net/"
   }
 
   depends_on = [
@@ -193,16 +223,66 @@ resource "azurerm_servicebus_topic" "servicebus_topic" {
   namespace_id = azurerm_servicebus_namespace.servicebus.id
 }
 
+resource "azurerm_servicebus_topic" "servicebus_topic_prod" {
+  name         = "nadro-iot-plc-topic"
+  namespace_id = azurerm_servicebus_namespace.servicebus.id
+}
+
 resource "azurerm_servicebus_subscription" "sub1" {
   name               = "plc-to-sap-forwarder"
-  topic_id           = azurerm_servicebus_topic.servicebus_topic.id
+  topic_id           = azurerm_servicebus_topic.servicebus_topic_prod.id
   max_delivery_count = 1
+}
+
+resource "azurerm_servicebus_subscription_rule" "rule_sub1" {
+  name            = "tfex_servicebus_rule_sub1"
+  subscription_id = azurerm_servicebus_subscription.sub1.id
+  filter_type     = "CorrelationFilter"
+
+  correlation_filter {
+    correlation_id = null
+    properties = {
+      Direction = "PLC_TO_SAP"
+    }
+  }
 }
 
 resource "azurerm_servicebus_subscription" "sub2" {
   name               = "sap-to-plc-forwarder"
-  topic_id           = azurerm_servicebus_topic.servicebus_topic.id
+  topic_id           = azurerm_servicebus_topic.servicebus_topic_prod.id
   max_delivery_count = 1
+}
+
+resource "azurerm_servicebus_subscription_rule" "rule_sub2" {
+  name            = "tfex_servicebus_rule_sub2"
+  subscription_id = azurerm_servicebus_subscription.sub2.id
+  filter_type     = "CorrelationFilter"
+
+  correlation_filter {
+    correlation_id = null
+    properties = {
+      Direction = "SAP_TO_PLC"
+    }
+  }
+}
+
+resource "azurerm_servicebus_subscription" "sub3" {
+  name               = "message-tracking"
+  topic_id           = azurerm_servicebus_topic.servicebus_topic_prod.id
+  max_delivery_count = 1
+}
+
+resource "azurerm_servicebus_subscription_rule" "rule_sub3" {
+  name            = "tfex_servicebus_rule_sub3"
+  subscription_id = azurerm_servicebus_subscription.sub3.id
+  filter_type     = "CorrelationFilter"
+
+  correlation_filter {
+    correlation_id = null
+    properties = {
+      Direction = "FOR_TRACKING"
+    }
+  }
 }
 
 resource "azurerm_monitor_diagnostic_setting" "diag_servicebus" {
